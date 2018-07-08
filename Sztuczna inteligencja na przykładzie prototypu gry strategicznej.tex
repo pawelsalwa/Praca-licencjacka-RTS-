@@ -221,7 +221,82 @@ Test wydajności będzie również zawarty w niniejszej pracy.
 \section{Asset pojedynczej jednostki}
 
 
-Hierarchia dziedziczenia klas w projekcie jest zaprojektowana tak, aby użyć możliwie najwięcej poprawnych dla gier RTS rozwiązań udostępnianych przez twórców Unreal Engine 4. Jednostka - czyli zwykły 'żołnierz' - w naszej grze, jest zapisana pod postacią obiektu 'BP SalwusUnit'. Klasa tego obiektu dziedziczy po klasie SalwaRTS.MyCharacter
+Hierarchia dziedziczenia klas w projekcie jest zaprojektowana tak, aby użyć możliwie najwięcej poprawnych dla gier RTS rozwiązań udostępnianych przez twórców Unreal Engine 4. Jednostka - czyli zwykły 'żołnierz' - w naszej grze, jest zapisana pod postacią obiektu 'BP SalwusUnit'. Klasa tego obiektu dziedziczy po klasie SalwaRTS.MyCharacter.h
+
+Ponieważ potrzebne jest, aby instancjować wiele obietów tej klasy, zgodnie z zasadą działania silnika musi być ona assetem typu Blueprint Class. Funkcjonalność tej klasy podzielona jest dzięki chierarchii dziedziczenia na dwa dedykowane dla projektu pliki: 
+\begin{itemize}
+\item[--] AMyCharacter.h - zawierającą klas C++
+\item[--] BPSalwusUnit - klasa Blueprint umożliwiająca wielokrotne instancjowanie jednostek w poziomach w silniku
+\end{itemize}
+
+AMyCharacter.h - zawiera klasę dziedziczącą po Unrealowej klasie 'ACharacter'. Dzięki temu zachowania takie jak: ruch jednostki, atak jednostki, otrzymywanie obrażeń są już zaimplementowane przez twórców silnika. W niniejszym projekcie potrzebne było rozszerzenie jej o zachowania typowe dla gry RTS, oraz o esencje tematu pracy, czyli algorytmy sztucznej inteligencji. To klasa AMyCharacter, w pliku AMyCharacter.cpp zawiera implementacje wszystkich funkcji, których potrzebuje pojedyncza jednostka, aby podejmować decyzje związane ze sztuczną inteligencją.
+
+Poniżej widoczny kod przedstawia pola klasy AMyCharacter:
+
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Publiczne pola klasy AMyCharacter]
+public:	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Units)
+	TArray<AMyCharacter*> VisibleUnits;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	float MaxHp = 100;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	float CurrentHp = 100;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	float CooldownBetweenAttacks;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	float AttackDuration;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	float DamagePerAttack;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	bool bHasTargetToAttack;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	bool bIsAttacking;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	bool bCanAttack;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
+	bool bIsAlive;
+\end{lstlisting}
+
+Pola te są opatrzone makrami, które silnik wykorzystuje do odpowiedniej serializacji danych pomiędzy kodem, a samym edytorem. Jest to bardzo ważne, ponieważ dziedzicząca klasa Blueprint BPSalwusUnit musi mieć do nich dostęp, aby implemenotwać własną funkcjonalność w języku Blueprint. Zastosowanie poszczególnych pól jest następnujące:
+\begin{itemize}
+\item[--] TArray<AMyCharacter*> VisibleUnits; - Kluczowa tablica dynamiczna, służąca do przechowywania wszystkich jednostek przeciwnika, które są w zasięgu. Jest ona uzupełniana za każdym razem, gdy system kolizji w silniu wykryje kolizję niewidocznych sfer, które są przymocowane jako komponenty do każdej jednostki i odpowiadają za wykrywanie czy jednostki te stanowią dla siebie nawzajem zagrożenie. Tablica ta wykorzystywana jest w funkcjach algorytmu sztucznej inteligencji, aby znajdować środek zagrożenia oraz szacowany czas, jaki jednostka jest w stanie przetrwać przed śmiercią.
+\item[--] BPSalwusUnit
+\end{itemize}
+
+
+Poniżej widoczny kod przedstawia funkcje klasy AMyCharacter z pliku nagłówkowego AMyCharacter.h: 
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Publiczne pola klasy AMyCharacter]
+public:
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UFUNCTION(BlueprintPure, Category = Health)
+	float GetHealthPercentage();
+	UFUNCTION(BlueprintCallable, Category = Health)
+	void ReceiveDamage(float Amount);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void Attack(AMyCharacter* UnitTargetToAttack);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void StartOfOverlap();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void MoveTo();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void DamageReceived(float Amount);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void GetNewTargetToAttack();
+
+	FVector GetMiddleOfEnemies();
+	FVector GetVectorOfEscape();
+	float GetCurrentEscapeTime();
+	float GetCurrentEscapeRouteLength();
+	float GetCurrentSurvivalTime();
+	bool CheckIfShouldEscape();
+	bool CheckIfCanEscape();
+	void Escape();
+\end{lstlisting}
+
+
+
+
 
 
 
