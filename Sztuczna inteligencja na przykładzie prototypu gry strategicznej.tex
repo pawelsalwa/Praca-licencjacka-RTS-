@@ -172,13 +172,36 @@ Gatunek RTS dotyczy wszelakich gier, gdzie gracza do zwycięstwa prowadzą decyz
 \item[--] jako symulacja ekonomiczna - w tym przypadku mamy do czynienia z zaimplementowaniem przeróżnych modeli ekonomicznych i zasad rynkowych, gdzie gracz poprzez inwestycje i handel jest w stanie pomnażać majątek, surowce i wszelakie inne zmienne liczbowe lub zdobywać zadane przez twórców osiągnięcia. Przykładem takich modeli mogą być zasady giełdy. Gry takie również często posiadają widok 'z lotu ptaka' na mapę ekonomiczną, jednak kluczowy jest w nich interfejs, na którym twórcy muszą przejrzyście przedstawić całą gamę zmiennych zależnych od siebie, spekulowane ich zmiany oraz multum przycisków do kontrowania tych zmiennych - decyzje gracza.
 \item[--] jako kombinacja dwóch powyższych - w grach takich stosuje się zwykle mniejszy interfejs dotyczący części ekonomicznej, a większą część ekranu zajmuje pole bitwy. Gracz jednocześnie musi podejmować decyzje dotyczące ekonomii, a jednostki i bitwy ich dotyczące mogą być traktowane zwykle jako jedna ze zmiennych ekonomicznych - inwestycja w wojsko.
 \end{itemize} 
-Ominę w niniejszej pracy aspekty gier RTS takie jak: makrozarządzanie, technologia, rozbudowa, scouting. Zajmę się w szczególności tematem mikrozarządzania jednostkami. 
+Niniejsza praca powstała na podstawie gry strategicznej, która jest symulacją bitwy pomiędzy jednym graczem, a komputerem. Pominąłem w niej aspekty gier RTS takie jak: makrozarządzanie, technologia, rozbudowa, scouting. Zajmę się natomiast w szczególności tematem mikrozarządzania jednostkami. 
 \section {Mikrozarządzanie jednostkami} 
-asd
+Jednzm z wielu zadań dla gracza gry RTS jest mikrozarządzanie jednostkami. Polega ono na tym, aby tak wydawać polecenia jednostkom, aby uzyskać z nich jak największe wartości sprzyjające celom danej gry. Rodzaje tych poleceń są ściśle związane z konkretną mechaniką danej gry. Różne systemy walki mogą wymagać bardzo różnych rodzajów rozkazów. Podstawowymi, wspólnymi dla wszyskich niemalże gier rodzajami rozkazów są nakazy poruszania się oraz ataku. Często polega to na zaznaczeniu danej jednostki lub grupy jednostek i kliknięciu na cel ruchu lub ataku. Rozmieszczenie jednostek na polu bitwy skutkuje w różnej ich wartości bojowej a także przewadze strategicznej. Bardzo popularnym czynnikiem dodającym wysokich poziomów skomplikowania gry jest nadanie jednostkom unikalnych zdolności. Te z kolei mogą być: 
+
+\begin{itemize}
+\item[--] pasywne - przez ciągły wpływ na różne zmienne, mogą wpływać na wyniki bitew, a tym samym pośrednio na decyzje graczy
+\end{itemize} 
+,oraz:
+\begin{itemize}
+\item[--] aktywne - te natomiast wymagają bezpośredniej akcji gracza - kolejnego konkretnego rodzaju rozkazu, który urozmaica strategie i wyniki walki 
+\end{itemize} 
+
+Zdolności takie są szczególnie wymagające i udowadniają, że poza strategicznymi aspektami bitwy, można do gry dodać także aspekty takie jak: zręczność lub refleks.
+
+Innym popularnym czynnikiem komplikującym wyniki bitew jest przewaga danego rodzaju jednostki nad innym. Jeżeli zarówno gracz jak i jego przeciwnik posiadają kilka rodzajów jednostek oraz obaj próbują zaatakować wykorzystując tę przewagę, to pole bitwy staje się bardzo skomplikowaną 'szachownicą' podatną na efekt motyla. Może być to bardzo łatwo implementowane i balansowane sukcesywnie lub według modeli matematycznych doputy, dopuki będzie zgodnie z docelowym 'user experience'.
+
+Atak może być w różnych scenariuszach mniej lub bardziej skuteczny a, podejmowanie decyzji o wydawaniu poszczególnych rozkazków należą do graczy, lub przygotowanej sztucznej inteligencji. Gracze muszą wydawać rozkazy w czasie rzeczywistym, a komputer ma za zadanie na bieżąco analizować dane i reagować odpowiednimi decyzjami.
+
+Jako, że każda gra może pominąć niektóre popularne aspekty gier RTS, projekt dołączony do niniejszej pracy skupiał się będzie szczególnie na problemie pozycjonowania jednostek przez algorytm sztucznej inteligencji w czasie rzeczywistym jako odpowiedź na decyzje gracza. Pominięte zostaną wszelakie systemy ekonomiczne oraz rozważania dotyczące używania unikalnych zdolności jednostek.
+%====================================== AI W RTS ======================================
 \section {Sztuczna inteligencja w grach RTS}
-asd
+Podczas projektowania AI w grach często spotykanym rozwiązaniem jest stworzenie systemu, który niekoniecznie poprawnie symuluje decyzje człowieka, ale raczej skupia się na odczuciach gracza i pozytywnym odbiorze gry przez niego. Okazuje się to szczególnie uproszczone przy zastosowaniu drzew decyzyjnych. Współczesne silniki posiadają wbudowane narzędzia do implementacji tego typu rozwiązań oraz całą gamę assetów i tool'ów utworzonych przez społeczność game developerską. Sprawdza się to głównie dlatego, że bardzo łatwo wyobrazić sobie i zasymulować decyzje komputera przy pomocy maszyny stanów. Drzewa decyzyjne umożliwiają łatwą implementację zachowań dla różnych stanów oraz przejść pomiędzy nimi na podstawie zmiennych w czasie rzeczywistym warunków. 
+%====================================== Współczesne rozwiązania=================================
 \section {Współczesne rozwiązania} 
-asd
+Ponieważ maszyny stanów mogą bardzo dokładnie symulować pewne sekwencyjne, zdefiniowane i powtarzające się akcje, sprawdzają się one bardzo dobrze w sytuacjach, gdzie gracz jest prowadzony przez rozgrywkę według planu twórców. Dlatego też misje, mapy w grach łatwo można oskryptować według wymyślonego modelu przy pomocy drzew decyzyjnych. Dotyczy to zwykle rutynowych akcji wykonywanych przez sztuczną inteligencję. Przykładem może być atak, wysłanie zwiadu, wybudowanie budynku lub zakup surowców raz na określony czas. Takie rozwiązanie jest bardzo łatwe do modelowania i testowania. Dzięki temu programista może łatwo dopasować implementację do zaprojektowanego modelu. 
+
+Problem rośnie jednak, gdy model gry pozwala na coraz więcej możliwych decyzji do podjęcia i sztuczna inteligencja musi raczej odpowiadać na dane nawet parudziesięciokrotnie w ciągu każdej sekundy, niż egzekwować kolejne rozkazy z oskryptowanej mapy. Wtedy stosowanym rozwiązaniem może być sieć neuronów.
+
+Dzięki możliwości analizy milionów strategii, sieci neuronowe okazały się być wyzwaniem nawet dla profesjonalnych graczy. Współczesne boty stworzone do grania w popularną grę rywalizacyjną Starcraft mając okazję zmierzyć się z mistrzami świata, przegrywały zwykle z niewielką przewagą ludzi.
+
 %======================================Zarys problemu pracy======================================
 \section {Zarys problemu pracy}
 Powszechną mechaniką spotykaną współcześnie w grach RTS jest regeneracja punktów życia zranionych w walce jednostek. Regeneracja odbywa się poza bitwami i zakładamy, że raz zabita jednostka, nie może się odrodzić. W związku z tą kwestią nasuwa się myśl:
@@ -195,7 +218,7 @@ Tak więc dążymy do takiego zarządzania jednostkami, aby w trakcie bitwy zmin
 Są to rozwiązania sprawdzone i stosowane przez współczesnych profesjonalnych graczy. Dotychczas nie są jednak one zaimplementowane do sztucznych inteligencji występujących we współczesnych grach  RTS. Celem projektu dołączonego do niniejszej pracy jest stworzenie gry, posiadającej podstawowe mechaniki zarządzaia jednostkami z gier typu RTS wraz ze sztuczną inteligencją imitującą wydawanie powyżej wymienionych rozkazów.
 
 
-Ponieważ symulacje bitew w grach tego rodzaju są często uproszczone i bierze w nich udział kilkanaście do maksymalnie kilkudziesięciu jednostek, człowiek ze swoim refleksem jest w stanie efektywnie zarządzać każdą posiadaną jednostką.
+Ponieważ symulacje bitew w grach tego rodzaju są często uproszczone i bierze w nich udział kilkanaście do maksymalnie kilkudziesięciu jednostek, człowiek ze swoim refleksem jest w stanie efektywnie zarządzać każdą posiadaną jednostką. Jest to dopasowane do przeciętnego, niepoczątkującego gracza, którego wskaźnik APM - akcji na minutę (ang. APM - Actions Per Minute) wynosi około 100 - 140. Warto nadmienić, że profesjonalni gracze, osiągający wskaźnik APM równy nawet ponad 250, nie wykorzystają w tak prostej grze swojego potencjału.
 
 
 
