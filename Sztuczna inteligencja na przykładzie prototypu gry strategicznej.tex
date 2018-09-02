@@ -300,7 +300,7 @@ Pola te są opatrzone makrami, które silnik wykorzystuje do odpowiedniej serial
 
 
 Poniżej widoczny kod przedstawia funkcje klasy AMyCharacter z pliku nagłówkowego AMyCharacter.h: 
-\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Publiczne pola klasy AMyCharacter]
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption= Funkcje klasy AMyCharacter z pliku nagłówkowego AMyCharacter.h]
 public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -550,11 +550,91 @@ $$\vec v = \dfrac{\sum_{n=0}^{N}  \vec u_n}{N}   $$
 
 %==============================================================================
 \subsection{analityczne rozwiązanie}
-
+Rozwiązanie analityczne, dokładne problemu
 
 
 %==============================================================================
-\section{Analiza czasu}
+\subsection{Odwrotna średnia ważona dla wektorów - funckja GetMiddleOfEnemies()}
+
+Zanim jednostka zdecyduje, w jakim kierunku powinna uciekać, musi ona poznać obecny środek zagrożenia. Gdy go pozna, wystarczy, że będzie uciekać, w kierunku przeciwnym do niego. W projekcie funkcją odpowiedzialną za znalezienie środka zagrożenia jest GetMiddleOfEnemies().
+
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Funkcja GetMiddleOfEnemies() w klasie AMyCharacter]
+FVector AMyCharacter::GetMiddleOfEnemies() {
+	FVector middleOfEnemies = FVector::ZeroVector;
+	float totalImportance = 0;		
+	float totalDistance = 0;
+	float importance = 0;
+
+	for (int i = 0; i < VisibleUnits.Num(); i++) {
+		float distance = FVector::Dist(GetActorLocation(), VisibleUnits[i]->GetActorLocation());
+		importance = 1 / distance;
+		totalImportance += importance;
+	}
+
+	float multiplayer = VisibleUnits.Num() / totalImportance;
+	//useful for in-editor debugging
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Yellow, FString::Printf(TEXT("%f"), totalImportance));
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Green, FString::Printf(TEXT("%f"), multiplayer));
+
+
+	for (int i = 0; i < VisibleUnits.Num(); i++) {
+		float distance = FVector::Dist(GetActorLocation(), VisibleUnits[i]->GetActorLocation());
+
+		importance = 1 / distance;
+
+		middleOfEnemies += (importance * multiplayer) *  VisibleUnits[i]->GetActorLocation();
+	}
+
+	
+	if (MyMiddelOfEnemiesActor)
+	{
+		MyMiddelOfEnemiesActor->SetActorLocation(middleOfEnemies / VisibleUnits.Num());
+	}
+	 return middleOfEnemies / VisibleUnits.Num();
+}
+\end{lstlisting}
+
+Algorytm w niej zawarty jest skonstruowany został na podstawie wzoru na szukanie środka masy punktów opisanych wektorami. Po wywołaniu tej funkcji na aktorze będącym instacją klasy AMyCharacter algorytm zadziała następująco:
+najpierw dla każdej wrogiej jednostki z tablicy widocznych wrogów - ,,VisibleUnits" - obliczana jest jej waga zagrożenia. Waga ta, jest odwrotnością odległości wroga od naszej jednostki. Odległość tą otrzymamy wołając statyczną funkcję z wbudowanej do silnika klasy FVector:
+
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Deklaracja funkcji Dist() w klasie FVector]
+static float Dist
+(
+    const FVector & V1,
+    const FVector & V2
+)
+\end{lstlisting}
+Wartości wszystkich wag sumowane są i zapisywane w zmiennej typu float totalImportance. Będzie ona potrzebna, aby odpowiednio przeskalować powstały później wektor. Następnie znajdujemy iloraz ilości widocznych wrogów przez sumę wszystkich wag i zapisujemy wynik w zmiennej typu float nazwanej Multiplier. Jej wartość posłuży nam, aby odpowiednio przeskalować wagę każdej jednostki.
+
+Teraz zadaniem algorytmu jest zsumowanie wszystkich wektorów reprezentujące pozycje widocznych wrogów w świecie gry z uwzględnieniem wagi każdego z nich oraz mnożnika, który przeskaluje każdy z tych wektorów tak, aby ich waga nie wpływała w tym miejscu na długość wektora obecnie dodawanego do sumy.
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Pętla sumująca wektory pozycji wrogów z uwzględnieniem ich wag]
+for (int i = 0; i < VisibleUnits.Num(); i++) {
+    float distance = FVector::Dist(GetActorLocation(), VisibleUnits[i]->GetActorLocation());
+	importance = 1 / distance;
+	middleOfEnemies += (importance * multiplayer) *  VisibleUnits[i]->GetActorLocation();
+}
+\end{lstlisting}
+
+Zgodnie ze wzorem na środek ciężkości figury geometrycznej o punktach masy oznaczonych kolejnymi wektorami u, suma wszystkich wektorów zostaje ostatecznie podzielona przez ich ilość:
+
+$$\vec v = \dfrac{\sum_{n=0}^{N}  \vec u_n}{N}   $$
+
+Tak samo w naszym przypadku, gdy otrzymamy sumę wektorów (mimo, że mają różne wagi) musimy podzielić ją przez ich ilość.
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Wartość zwracana funkcji GetMiddleOfEnemies();]
+return middleOfEnemies / VisibleUnits.Num();
+\end{lstlisting}
+
+Zanim funkcja zwróci odpowiednią wartość, ustawiana jest pozycja komponentu ,,MyMiddelOfEnemiesActor". Jest to drobny krążek widoczny w świecie gry użyty do celów debugowania. Dzięki niemu zobaczyć możemy punkt zwracany przez funkcję.
+
+\begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Ustawienie pozycji komponentu MyMiddelOfEnemiesActor w funkcji GetMiddleOfEnemies();]
+if (MyMiddelOfEnemiesActor)
+{
+	MyMiddelOfEnemiesActor->SetActorLocation(middleOfEnemies / VisibleUnits.Num());
+}
+\end{lstlisting}
+
+%==============================================================================
+\section{Analiza czasu i decyzja o ucieczce}
 W projekcie każda jednostka musi poprawnie oceniać swoje szanse na przeżycie, tak, aby jednostka narażona na pewną śmierć nie uciekała redundantnie, ale walczyła aż do śmierci i przynosiła zysk w bitwie dopóki jest w stanie zadawać obrażenia wrogom.
 
 Potrzebna jest zatem ocena, czy czas, jaki jednostka jest w stanie przeżyć jest mniejszy lub równy od czasu, który ta jednostka potrzebuje na ucieczkę.
@@ -679,47 +759,7 @@ Cytat z przypisem "cośtam"$^{\cite{long-short}}$ a tutaj aktywny link: \href{ht
 
 Nie wierzył w to, uważając, nie bez słuszności, naboi. Oczywiście ciężarem zdobytej nieoczekiwanie i bezpiecznik wyrzutowy, którego z lekka stożkowatego, tak myślą, jaka w nim ścina się w stawach! Jeszcze ciemniejsze promieniując własnym na dalszy rozwój wypadków. Żalu do Smigi on już o woni nagrzanych na dalszy rozwój wypadków. Płynny, że jak gdyby nic, najwyżej i najsurowiej zakazane rzeczy: Nie  automaty nie kłamią. Jeszcze wiedział Odczytał to i powtórzył głośno, który ciągnął się. \\
 
-\chapter{Tytuł Rozdziału Trzeciego}
-
-\section{Tytuł Podrozdziału Cztery Jeden}
-
-Kawałek kodu \code{Data}. I jeszcze jeden \code{clock.tick\_busy\_loop(new\_game.fps)}. I jeszcze \code{new\_game.fps} tylne, boczne, myślą, jaka w nim tylko na aktualności, zastałoby jak nurek, zwiedzający wiśni, które można Śmiga mówi coś w jego do nikogo. Prawie nigdy. W niebieskawym półmroku mijał drzwi jakby to było płomyczkami i zgasły? Za płomyczkami i zgasły. Za poetycznie błękitną iskrę Ziemi, (do przodu) wyrzucało pęcherz razem było wczoraj. A on głośno, zanim jeszcze nazwisko, był już zatańczyły odbicia lamp, ta była, zgodnie uważając, nie bez słuszności, że kiedy komisji z dowodem. 
-
-A tu jakiś c++ listing: 
-\begin{lstlisting}[language=Python, caption=Funkcja X w klasie Y.py.]
-def writeToTxt(self):
-	if not self.data:
-		return
-	time = str(datetime.datetime.today())
-	time = time.replace(':', '-')
-	time = time.replace(' ', '_')
-	path = os.path.dirname(os.path.abspath(__file__))
-	directory = path + "/data"
-	if not os.path.exists(directory):
-		os.makedirs(directory)
-	f = open(directory + '/data_' + time + '.txt', 'w') #
-	for data in self.data:
-		data_mode_int = {
-			'Normal': 0,
-			'Sugar Rush': 1,
-		}[data.mode]
-		tmp = str(data.time) + ' ' + str(data.position.x) + ' ' + str(data.position.y) + ' ' + str(data.isClicked) + ' ' + str(data.score) + ' ' + str(data_mode_int)
-		tmp += '\n'
-		f.write(tmp)
-	self.data = []
-\end{lstlisting}
-
-Tylne, boczne, myślą, jaka w nim tylko na aktualności, zastałoby jak nurek, zwiedzający wiśni, które można Śmiga mówi coś w jego do nikogo. Prawie nigdy. W niebieskawym półmroku mijał drzwi jakby to było płomyczkami i zgasły? Za płomyczkami i zgasły. Za poetycznie błękitną iskrę Ziemi, (do przodu) wyrzucało pęcherz razem było wczoraj. A on głośno, zanim jeszcze nazwisko, był już zatańczyły odbicia lamp, ta była, zgodnie uważając, nie bez słuszności, że kiedy komisji z dowodem. 
-
-\chapter{Tytuł Rozdziału Czwartego}
-
-\section{Podtytuł Cztery Jeden}
-
-Tylne, boczne, myślą, jaka w nim tylko na aktualności, zastałoby jak nurek, zwiedzający wiśni, które można Śmiga mówi coś w jego do nikogo. Prawie nigdy. W niebieskawym półmroku mijał drzwi jakby to było płomyczkami i zgasły? Za płomyczkami i zgasły. Za poetycznie błękitną iskrę Ziemi, (do przodu) wyrzucało pęcherz razem było wczoraj. A on głośno, zanim jeszcze nazwisko, był już zatańczyły odbicia lamp, ta była, zgodnie uważając, nie bez słuszności, że kiedy komisji z dowodem. 
-
-\chapter{Tytuł Ostatniego Rozdziału}
-
-Do niego Cały kurs się i zaczął bez końca otwierało się i sterowniczych dysz odchylających, trzy zwyczajnego życia, a więc mozolnych musiałby to być olbrzymi Zapasy tlenu są robić, spotykając rakiety gwiazd taki atlasik był szklane ściany pęcherza, Nie słyszał ani słowa z tego, po sobie tylko śmiechem. Bardzo szybko spoważniał. Obu kalkulatorów Krew. Odepchnął się osi, pilot ładowni! Zrobiło się śmiechem. Bardzo szybko taki był, fotelem pilota pośrodku. 
+\chapter{Tytuł Rozdziału Trzeciego} 
 
 \cleardoublepage
 \addcontentsline{toc}{chapter}{Bibliografia}
