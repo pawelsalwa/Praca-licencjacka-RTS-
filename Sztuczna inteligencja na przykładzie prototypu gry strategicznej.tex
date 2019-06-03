@@ -1,9 +1,3 @@
-% Rzeczy które wiem, że można zrobić a ich nie zrobiłem
-
-% Głębsza analiza state of the art 
-
-%Wstęp - o czym jest praca 
-
 \documentclass[12pt]{report}
 
 \setcounter{tocdepth}{4}
@@ -332,7 +326,8 @@ Poniżej widoczny kod przedstawia funkcje klasy \texttt{AMyCharacter} z pliku na
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption= Funkcje klasy AMyCharacter z pliku nagłówkowego \texttt{AMyCharacter.h}]
 public:
 	virtual void \texttt{Tick}(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(
+	class UInputComponent* PlayerInputComponent) override;
 	UFUNCTION(BlueprintPure, Category = Health)
 	float GetHealthPercentage();
 	UFUNCTION(BlueprintCallable, Category = Health)
@@ -375,7 +370,9 @@ W niniejszym podrozdziale opisane zostaną obsługi eventów dotyczących klasy 
 Podczas wywoływania powyższych eventów wywoływana jest również Blueprintowa funkcja \texttt{FindTargetToAttack()}. Odpowiada ona za znalezienie nowego celu ataku (gdy obecny cel jest odpowiedni nic się nie zmienia) i umieszczenie referencji do niech w zmiennej typu \texttt{BP\_BasicUnit} nazwanej \texttt{UnitTargetToAttack}. Jej wywołanie jest potrzebne znowu - w dwóch sytuacjach:
 \begin{itemize}
 \item[--] gdy obecny cel ataku zginie - wywołuje on wtedy event OnDeath. Ten z kolei jest przypisywany każdej widocznej jednostce i poza wywołaniem funkcji \texttt{FindTargetToAttack()}, nakazuje atak kolejnej jednostki (zostanie to wyjaśnione przy opisie eventu Attack)
-\item[--] żywy ucieknie poza zasięg (wywoływanie następuje zawsze w evencie \texttt{OnComponentEndOverlap}).
+\item[--] żywy ucieknie poza zasięg (wywoływanie następuje zawsze w evencie
+
+\texttt{OnComponentEndOverlap}).
 \end{itemize}
 
 
@@ -413,7 +410,12 @@ Lewy przycisk myszy obsługuje algorytm napisany w całości używając Blueprin
 
 MyGetActorsInSelectionRectangle().
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Funkcja MyGetActorsInSelectionRectangle() w klasie MyHUD.]
-void AMyHUD::MyGetActorsInSelectionRectangle(TSubclassOf<class AActor> ClassFilter, const FVector2D& FirstPoint, const FVector2D& SecondPoint, TArray<AActor*>& OutActors)
+void AMyHUD::MyGetActorsInSelectionRectangle(
+    TSubclassOf<class AActor> ClassFilter, 
+    const FVector2D& FirstPoint, 
+    const FVector2D& SecondPoint, 
+    TArray<AActor*>& OutActors
+)
 \end{lstlisting}
 
 Jest to funkcja zapisana w języku C++, wywoływana z poziomu Blueprint, dopasowana do projektu, która oryginalnie zawarta jest w pliku HUD.cpp. Po przekazaniu do niej kolejnych argumentów: 
@@ -431,7 +433,10 @@ Ponadto podczas eventu puszczania lewego przycisku myszy wywoływay jest na każ
 Tak jak jest to wdrażane w większości gier RTS, tak i w moim projekcie prawy przycisk myszy służy, do wydannia jednostkom rozkazu ruchu. Wciśnięcie jego powoduje wywołanie w pętli na każdej jednostce zawartej w tablicy 'SelectedUnits' funkcji SimpleMoveToLocation()
 
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Funkcja SimpleMoveToLocation() w klasie UNavigationSystem.]
-void UNavigationSystem::SimpleMoveToLocation(AController* Controller, const FVector& GoalLocation)
+void UNavigationSystem::SimpleMoveToLocation(
+    AController* Controller, 
+    const FVector& GoalLocation
+)
 \end{lstlisting}
 Kontroler każdej jednostki przekazujemy przy każdej iteracji dzięki funkcji GetAiController. Pozostaje przekazać odpowiednią pozycję do powyższej funkcji. Wektor 3D wskazujące na miejsce docelowe ruchu otrzymany został przy pomocy struktury, którą zwraca funkcja GetHitResultUnderCursorByChannel(). 
 
@@ -447,9 +452,6 @@ Wszystkie animacje użyte w niniejszym projekcie są darmowymi assetami i pochod
 Na poniższym obrazku widać schemat połączenia animacji z pliku 'RTSUnitAnimBlueprint'.
 
 
-
-\section{Sprawdzenie wydajności silnika}
-qweqweqwe
 %=========================================================================================
 \chapter{Algorytm}
 \section{Sformułowanie problemu}
@@ -621,29 +623,38 @@ FVector AMyCharacter::GetMiddleOfEnemies() {
 	float importance = 0;
 
 	for (int i = 0; i < VisibleUnits.Num(); i++) {
-		float distance = FVector::Dist(GetActorLocation(), VisibleUnits[i]->GetActorLocation());
+		float distance = FVector::Dist(
+		    GetActorLocation(), 
+		    VisibleUnits[i]->GetActorLocation()
+		);
 		importance = 1 / distance;
 		totalImportance += importance;
 	}
 
 	float multiplayer = VisibleUnits.Num() / totalImportance;
 	//useful for in-editor debugging
-	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Yellow, FString::Printf(TEXT("%f"), totalImportance));
-	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Green, FString::Printf(TEXT("%f"), multiplayer));
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Yellow, 
+	    FString::Printf(TEXT("%f"), totalImportance));
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Green, 
+	    FString::Printf(TEXT("%f"), multiplayer));
 
 
 	for (int i = 0; i < VisibleUnits.Num(); i++) {
-		float distance = FVector::Dist(GetActorLocation(), VisibleUnits[i]->GetActorLocation());
+		float distance = FVector::Dist(GetActorLocation(), 
+		    VisibleUnits[i]->GetActorLocation());
 
 		importance = 1 / distance;
 
-		middleOfEnemies += (importance * multiplayer) *  VisibleUnits[i]->GetActorLocation();
+		middleOfEnemies += 
+		    (importance * multiplayer) *  
+		    VisibleUnits[i]->GetActorLocation();
 	}
 
 	
 	if (MyMiddelOfEnemiesActor)
 	{
-		MyMiddelOfEnemiesActor->SetActorLocation(middleOfEnemies / VisibleUnits.Num());
+		MyMiddelOfEnemiesActor->SetActorLocation(middleOfEnemies 
+		    / VisibleUnits.Num());
 	}
 	 return middleOfEnemies / VisibleUnits.Num();
 }
@@ -664,9 +675,12 @@ Wartości wszystkich wag sumowane są i zapisywane w zmiennej typu float: totalI
 Teraz zadaniem algorytmu jest zsumowanie wszystkich wektorów reprezentujące pozycje widocznych wrogów w świecie gry z uwzględnieniem wagi każdego z nich oraz mnożnika, który przeskaluje każdy z tych wektorów tak, aby ich waga nie wpływała w tym miejscu na długość wektora obecnie dodawanego do sumy.
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Pętla sumująca wektory pozycji wrogów z uwzględnieniem ich wag]
 for (int i = 0; i < VisibleUnits.Num(); i++) {
-    float distance = FVector::Dist(GetActorLocation(), VisibleUnits[i]->GetActorLocation());
+    float distance = FVector::Dist(GetActorLocation(), 
+        VisibleUnits[i]->GetActorLocation());
 	importance = 1 / distance;
-	middleOfEnemies += (importance * multiplayer) *  VisibleUnits[i]->GetActorLocation();
+	middleOfEnemies += 
+	    (importance * multiplayer) *  
+	    VisibleUnits[i]->GetActorLocation();
 }
 \end{lstlisting}
 
@@ -684,7 +698,8 @@ Zanim funkcja zwróci odpowiednią wartość, ustawiana jest pozycja komponentu 
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Ustawienie pozycji komponentu MyMiddelOfEnemiesActor w funkcji GetMiddleOfEnemies();]
 if (MyMiddelOfEnemiesActor)
 {
-	MyMiddelOfEnemiesActor->SetActorLocation(middleOfEnemies / VisibleUnits.Num());
+	MyMiddelOfEnemiesActor->SetActorLocation(
+	    middleOfEnemies / VisibleUnits.Num());
 }
 \end{lstlisting}
 
@@ -705,9 +720,12 @@ W projekcie służy do tego funkcja GetCurrentSurvivalTime() umieszczona w klasi
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Funkcja GetCurrentSurvivalTime w klasie \texttt{AMyCharacter.cpp}.]
     float AMyCharacter::GetCurrentSurvivalTime() {
 		float damageReceivedPerSecond = 0;
-		for (int i = 0; i < VisibleUnits.Num(); i++) {//add damage done by single unit to sum, all given values are in seconds
+		// add damage done by single unit to sum, 
+		// all given values are in seconds
+		for (int i = 0; i < VisibleUnits.Num(); i++) { 
 			damageReceivedPerSecond += VisibleUnits[i]->DamagePerAttack /
-				(VisibleUnits[i]->CooldownBetweenAttacks + VisibleUnits[i]->AttackDuration);
+				(VisibleUnits[i]->CooldownBetweenAttacks + 
+				    VisibleUnits[i]->AttackDuration);
 		}
 		return CurrentHp / damageReceivedPerSecond;
 	}
@@ -726,7 +744,8 @@ Za obliczenie czasu ucieczki pojedynczej jednostki w projekcie odpowiedzialna je
 
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Funkcja GetCurrentEscapeTime w klasie \texttt{AMyCharacter.cpp}.]
 	float AMyCharacter::GetCurrentEscapeTime() {
-		float characterSpeed = FVector::DotProduct(GetVelocity(), GetActorRotation().Vector());
+		float characterSpeed = FVector::DotProduct(GetVelocity(), 
+		    GetActorRotation().Vector());
 		return GetCurrentEscapeRouteLength() / characterSpeed;
 	}
 \end{lstlisting}
@@ -742,7 +761,7 @@ Jednostka podejmuje decyzje o ucieczce na podstawie dwóch funkcji:
 Sposób implementacji powyższych funkcji przedstawia fragment kodu:
 
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Funkcje CheckIfShouldEscape i CheckIfCanEscape w klasie \texttt{AMyCharacter.cpp}.]
-    bool AMyCharacter::CheckIfCanEscape() {
+bool AMyCharacter::CheckIfCanEscape() {
 	if (GetCurrentSurvivalTime() < GetCurrentEscapeTime())
 		return \texttt{false};
 	else
@@ -750,7 +769,8 @@ Sposób implementacji powyższych funkcji przedstawia fragment kodu:
 }
 
 bool AMyCharacter::CheckIfShouldEscape() {
-	if (GetCurrentSurvivalTime() + EscapeAccuracy < GetCurrentEscapeTime()) {
+	if (GetCurrentSurvivalTime() + EscapeAccuracy < 
+	    GetCurrentEscapeTime()) {
 		return \texttt{true};
 	}
 	else {
@@ -762,7 +782,8 @@ bool AMyCharacter::CheckIfShouldEscape() {
 Najpierw sprawdzane jest, czy jednostka powinna uciekać, następnie dopiero czy jest w stanie uciec. Wywołanie następuje w funkcji \texttt{\texttt{Tick}()} jak przedstawia poniższy kod.:
 
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, caption=Wywołanie funkcji CheckIfShouldEscape i CheckIfCanEscape w funkcji \texttt{\texttt{Tick}()} klasy AMyCharacter.]
-if (Team == ETeam::AI && VisibleUnits.Num() > 0 && CheckIfShouldEscape() ) {
+if (Team == ETeam::AI && VisibleUnits.Num() > 
+    0 && CheckIfShouldEscape() ) {
 			if (CheckIfCanEscape()) {
 				Escape();
 				unitMode = UnitMode::Escaping;
@@ -788,7 +809,7 @@ Rozkazy jednostkom możemy wydawać po wcześniejszym ich zaznaczeniu przy pomoc
 Ponieważ jednostki regenerują swoje punkty życia, jeżeli tylko zauważymy, że któraś z naszych jednostek ma maksymalną ilość i nie walczy, powinniśmy ją wysłać do walki, aby nieustannie czerpać z niej możliwie najwięcej korzyści.
 
 \section{Zakończenie}
-Projekt będący częścią niniejszej pracy umożliwia przetestowanie implementacji wcześniej opisanych teoretycznych rozwiązań. W zależności od rozstawienia jednostek możemy uzyskać dość ciężkie wyzwanie dla gracza, aby pokonać sztuczną inteligencję przeciwnika. Podsumowując, praca daje przykładowe rozwiązania dla problemów, które można powszechnie napotkać przy projektowaniu przeciwników komputerowych w grze RTS.
+Projekt będący częścią niniejszej pracy umożliwia przetestowanie implementacji wcześniej opisanych teoretycznych rozwiązań. W zależności od rozstawienia jednostek możemy uzyskać dość ciężkie wyzwanie dla gracza, aby pokonać sztuczną inteligencję przeciwnika. Przy jednakowym początkowym rozłożeniu sił, gdy gracz nie wykonuje żadnych akjcji, komputer wygrywa dzięki swoim decyzjom. Podsumowując, praca daje przykładowe rozwiązania dla problemów, które można powszechnie napotkać przy projektowaniu przeciwników komputerowych w grze RTS.
 
 Poruszane w pracy problemy dają duży potencjał do tworzenia ścieżek rozwoju dla współczesnej sztucznej inteligencji w grach czasu rzeczywistego. Jest to niesamowicie wartościowy temat dla firm i społeczności związanych z tworzeniem gier, który może przenieść swoje zastosowania w inne branże informatyczne i przemysłowe.
 
@@ -804,9 +825,11 @@ Cytat z przypisem "cośtam"$^{\cite{long-short}}$ a tutaj aktywny link: \href{ht
 
 \cleardoublepage
 \addcontentsline{toc}{chapter}{Bibliografia}
-{\begin{thebibliography}{9}
+\begin{thebibliography}{9}
 
-\bibitem{aima} Stuart J. Russell, Peter Norvig, \emph{Artificial Intelligence. A Modern Approach. Second Edition.}, 2003.
+\bibitem{aima} Michael Buro, \emph{Real-Time Strategy Games: A New AI Research Challenge.}, 2003.
+
+\bibitem{aima} Michael Buro and Timothy Furtak, \emph{RTS Games as Test–Bed for Real–Time AI Research}, 2003.
 
 \bibitem{niel} Michael Nielsen, \emph{Neural Networks and Deep Learning}, 2017, \href{http://neuralnetworksanddeeplearning.com}{http://neuralnetworksanddeeplearning.com}.
 
