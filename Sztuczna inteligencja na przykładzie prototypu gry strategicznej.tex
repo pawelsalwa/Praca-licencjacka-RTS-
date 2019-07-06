@@ -449,7 +449,10 @@ Wszystkie animacje użyte w niniejszym projekcie są darmowymi assetami i pochod
 \item[--] atak. 
 \end{itemize}
 
+Przejścia
 Na poniższym obrazku widać schemat połączenia animacji z pliku 'RTSUnitAnimBlueprint'.
+
+\includegraphics[scale=0.6]{animGraph.png}
 
 
 %=========================================================================================
@@ -594,23 +597,19 @@ Zmienną ,,totalImportance" musimy niezależnie obliczyć sumując wszystkie wag
 
 $$\vec z = \dfrac{\sum_{n=0}^{N}  {multiplier + importance * \vec j_n}}{N},   $$
 
-Rozwiązanie to wybrałem jako odpowiednie do implementacji w projekcie. Głównym powodem jest pożądane zachowanie sztucznej inteligencji imitujące zachowanie człowieka. Równie ważne jest, iż ten algorytm posiada relatywnie niską złożoność obliczeniową 
+Rozwiązanie to wybrałem jako odpowiednie do implementacji w projekcie. Głównym powodem jest pożądane zachowanie sztucznej inteligencji imitujące zachowanie człowieka. Równie ważne jest, iż ten algorytm posiada relatywnie niską złożoność obliczeniową - O(N), gdzie N oznacza ilość jednostek stanowiących zagrożenie.
 
 %==============================================================================
 \subsection{Idealne analityczne rozwiązanie}
 
 Czy idealne rozwiązanie jest takim, którego potrzebujemy?
-Jeżeli dana jednostka jest w stanie zagrożenia od więcej niż jednej jednostki wrogiej, to najkrótsza droga ucieczki musi przebiegać przez punkt przecięcia się okręgów oznaczających widoczność wrogich jednostek. Jest to spowodowane tym, że każda z nich posiada obsługę kolizji i nie może wejść na inną.
-Na poniższym rysunku widzimy schemat rozstawienia trzech jednostek:
+Jeżeli dana jednostka jest w stanie zagrożenia od więcej niż jednej jednostki wrogiej, to najkrótsza droga ucieczki musi przebiegać przez punkt przecięcia się okręgów oznaczających zasięg ataku wrogich jednostek. Jest to związane ze znalezieniem wszystkich punktów przecięć tych okręgów, a następnie znalezienie najbliżeszego z tych punktów względem nas.
 
-Jeżeli do schematu zechcemy dodać kolejną jednostkę, która jest w stanie zagrożenia od wszyskich już narysowanych, to musimy ją umieścić w zaznaczonym na czerwono obszarze (umieszczoną jednostkę zaznaczmy na czerwono):
-
-Rozwiązaniem idealnym nazwiemy takie, w którym sprawdzimy wszystkie punkty przecięcia okręgów symbolizujące widoczność wrogów i wybierzemy najbliższy z nich. Złożoność obliczeniowa znalezienia kolejnych punktów przecięcia rośnie tak, jak suma ciągu arytmetycznego o różnicy równej 1. Dzieje się tak, ponieważ każdą kolejną dodaną jednostkę numer 'n' musimy porównać z każdą z poprzednio kolidujących jednostek (których łącznie jest n-1). Wzór na sumę takiego ciągu przedstawiony jest następująco: 
+Wraz z dodaniem kolejnych widocznych wrogów, złożoność obliczeniowa znalezienia kolejnych punktów przecięcia rośnie tak, jak suma ciągu arytmetycznego o różnicy równej 1. Dzieje się tak, ponieważ dla każdej kolejnej jednostki o numerze 'n' musimy obliczyć jej punkty przecięcia z pozostałymi widocznymi już wrogami (których łącznie jest n-1). Wzór na sumę takiego ciągu przedstawiony jest następująco: 
 
 $$\sum\limits_{k=1}^n k = \frac{n(n+1)}{2}$$
 
 Złożoność obliczeniowa wyszukiwania idealnego punktu do ucieczki w zależności od ilości istniejących jednostek będzie zatem kwadratowa. W przypadku gry RTS jest to niedopuszczalane, jako że optymalizacja jest sprawą kluczową.
-
 
 %==============================================================================
 \subsection{Zastosowane rozwiązanie - odwrotna średnia ważona dla wektorów - funckja GetMiddleOfEnemies()}
@@ -710,7 +709,7 @@ if (MyMiddelOfEnemiesActor)
 \subsection{Przedstawienie problemu ucieczki jednostki}
 W projekcie każda jednostka musi poprawnie oceniać swoje szanse na przeżycie, tak, aby jednostka narażona na pewną śmierć nie uciekała redundantnie, ale walczyła aż do śmierci i przynosiła zysk w bitwie dopóki jest w stanie zadawać obrażenia wrogom.
 
-Potrzebna jest zatem ocena, czy czas, jaki jednostka jest w stanie przeżyć jest mniejszy lub równy od czasu, który ta jednostka potrzebuje na ucieczkę.
+Potrzebna jest zatem ocena czy czas, jaki jednostka jest w stanie przeżyć jest mniejszy lub równy czasowi, którego ta jednostka potrzebuje na ucieczkę.
 
 \begin{lstlisting}[language=C++, backgroundcolor=\color{black!5}, basicstyle=\footnotesize, 
 
@@ -733,9 +732,9 @@ W projekcie służy do tego funkcja GetCurrentSurvivalTime() umieszczona w klasi
 	}
 \end{lstlisting}
 
-Jako, że wszystkie jednostki są jednakowe, to mają też jednakowy zasięg ataku. Stąd wynika to, że jeżeli jedna jednostka jest w zasięgu atatku drugiej, to druga musi być w zasięgu pierwszej. Wykorzystałen ten fakt, aby uprościć kod i użyć w powyższej funkcji tablicy jednostek będących w zasięgu ataku - VisibleUnits[] - jako tablicy jednostek wrogich stanowiących zagrożenie. Jeżeli jednostki nie były by indentyczne, wymagało by to, przechowywania w osobnej - dodatkowej - tablicy tych wrogów, w których zasięgu jesteśmy, niezależnie czy oni są w naszym.
+Jako, że wszystkie jednostki są jednakowe, to mają też jednakowy zasięg ataku. Stąd wynika, że jeżeli jedna jednostka jest w zasięgu atatku drugiej, to druga musi być w zasięgu pierwszej. Wykorzystałen ten fakt aby uprościć kod i użyć w powyższej funkcji tablicy jednostek będących w zasięgu ataku - VisibleUnits[] - jako tablicy jednostek wrogich stanowiących zagrożenie. Jeżeli jednostki nie byłyby indentyczne, wymagałoby to, przechowywania w osobnej - dodatkowej - tablicy tych wrogów, w których zasięgu jesteśmy, niezależnie czy oni są w naszym.
 
-Kolejną ważną wartością w algorytmie obok pozostałego czasu życia jednostki jest czas jaki potrzebuje ona na ucieczkę. Ponieważ dysponujemy taką zmienną jak prędkość jednostki oraz jesteśmy w stanie policzyć lub raczej - jak później zaprezentuję - numerycznie oszacować długość drogi ucieczki, czas jesteśmy w stanie policzyć z trywialnego wzoru na prędkość:
+Kolejną ważną wartością w algorytmie obok pozostałego czasu życia jednostki jest czas jakiego potrzebuje ona na ucieczkę. Ponieważ dysponujemy taką zmienną jak prędkość jednostki oraz jesteśmy w stanie obliczyć lub raczej - jak później zaprezentuję - numerycznie oszacować długość drogi ucieczki, czas jesteśmy w stanie obliczyć z trywialnego wzoru na prędkość:
 
 \[ \text{prędkość jednostki} =  \dfrac{\text{droga ucieczki}}{\text{czas ucieczki}}  \]
 tak więc:
@@ -756,7 +755,7 @@ Za obliczenie czasu ucieczki pojedynczej jednostki w projekcie odpowiedzialna je
 
 Jednostka podejmuje decyzje o ucieczce na podstawie dwóch funkcji: 
 \begin{itemize}
-\item[--] bool CheckIfShouldEscape() - funkcja ta sprawdza, czy jendostka jest w stanie zagrożenia od wszystkich widocznych wrogów. Zwraca wtenczas wartość \texttt{true}, w przeciwnym razie - \texttt{false}
+\item[--] bool CheckIfShouldEscape() - funkcja ta sprawdza czy jendostka jest w stanie zagrożenia od wszystkich widocznych wrogów. Zwraca wtenczas wartość \texttt{true}, w przeciwnym razie - \texttt{false}
 \item[--] bool CheckIfCanEscape() - funkcja ta ma niemalże identyczny kod, jak ta, wymieniona wyżej. Róznica polega na dodaniu zmiennej typu float - EscapeAccuracy. Na podstawie tej zmiennej oceniane jest, czy jednostka ma fizyczną możliwość ucieczki i przetrwania. Jeżeli na podstawie zagrożenia od widocznych jednostek czas na przetrwanie jest zbyt krótki, funkcja zwraca wartość \texttt{false}, co oznacza, że nie warto uciekać i jednostka powinna walczyć do śmierci. Im większa będzie wartość zmiennej EscapeAccuracy, tym bardziej ostrożnie zachowywać się będzie jednostka. W projekcie jej wartość wynosi -1,5 i może być zmieniana w oknie edycji klas Blueprint dla jednostki BP\_BasicUnit.
 \end{itemize}
 
@@ -804,14 +803,14 @@ Zgodnie z testami wydajności na czterordzeniowym procesorze o częstotliwości 
 W rozdziale tym opisane są zasady gry oraz jak wydawać rozkazy swoim jednostkom.
 Po uruchomieniu gry, zgodnie z instrukcją wyświetloną na ekranie zadaniem gracza jest rozstawienie jednostek po dwóch stronach mapy - w górnej i dolnej jej części. 
 
-Jednostki powinny być rozstawione tak, aby wrogowie nie kolidowali ze sobą i ta sama drużyna powinna zajmować jedną część mapy. Jednostki ustawiane są pod kursorem myszy po wciśnięciu odpowiedniego przycisku - ,,F" aby stworzyć jednostkę gracza i 'G', aby stworzyć jednostkę sterowaną przez AI. Po Rozmieszczeniu kilku jednostek możemy rozpocząć bitwę klawiszem 'B'. Wtedy jednostki komputera zaczną atakować nasze. Od tego momentu naszym zadaniem jest sterowanie naszymi wojskami tak, aby uciekać z bitwy jednostkami najbardziej rannymi oraz wysyłać jednostki z największą ilością punktów życia do ataku najsłabszych przeciwników.
+Jednostki powinny być rozstawione tak, aby wrogowie nie kolidowali ze sobą i ta sama drużyna powinna zajmować jedną część mapy. Jednostki ustawiane są pod kursorem myszy po wciśnięciu odpowiedniego przycisku - ,,F" aby stworzyć jednostkę gracza i 'G', aby stworzyć jednostkę sterowaną przez AI. Po rozmieszczeniu kilku jednostek możemy rozpocząć bitwę klawiszem 'B'. Wtedy jednostki komputera zaczną atakować nasze. Od tego momentu naszym zadaniem jest sterowanie naszymi wojskami tak aby uciekać z bitwy jednostkami najbardziej rannymi oraz wysyłać jednostki z największą ilością punktów życia do ataku najsłabszych przeciwników.
 
-Rozkazy jednostkom możemy wydawać po wcześniejszym ich zaznaczeniu przy pomocy kliknięcia lewego przycisku myszy i przeciągnięciu jej. Zaznaczonym jednostkom możemy nakazać przemieszczenie się normalnie lub ofensywnie. Ruch zwykły to po prostu bieg w kierunku miejsca, króre klikniemy prawym przyciskiem myszy. Ruch ofensywny nakazujemy, gdy przed kliknięciem prawego przycisku myszy wciśniemy klawisz 'C'. Jednostki wtedy poruszać się będą normalnie, aż do momentu, gdy jakiś przeciwnik będzie w zasięgu ataku. Wtedy nastąpi atak widocznego przeciwnika (jednego z wielu jeżeli jest ich w danym momencie więcej).
+Rozkazy jednostkom możemy wydawać po wcześniejszym ich zaznaczeniu przy pomocy kliknięcia lewego przycisku myszy i przeciągnięciu jej. Zaznaczonym jednostkom możemy nakazać przemieszczenie się normalnie lub ofensywnie. Ruch zwykły to po prostu bieg w kierunku miejsca, które klikniemy prawym przyciskiem myszy. Ruch ofensywny nakazujemy, gdy przed kliknięciem prawego przycisku myszy wciśniemy klawisz 'C'. Jednostki wtedy poruszać się będą normalnie, aż do momentu, gdy jakiś przeciwnik będzie w zasięgu ataku. Wtedy nastąpi atak na widocznego przeciwnika (jednego z wielu jeżeli jest ich w danym momencie więcej).
 
-Ponieważ jednostki regenerują swoje punkty życia, jeżeli tylko zauważymy, że któraś z naszych jednostek ma maksymalną ilość i nie walczy, powinniśmy ją wysłać do walki, aby nieustannie czerpać z niej możliwie najwięcej korzyści.
+Ponieważ jednostki regenerują swoje punkty życia, jeżeli tylko zauważymy, że któraś z naszych ma maksymalną ilość i nie walczy, powinniśmy ją wysłać do walki, aby nieustannie czerpać z niej możliwie najwięcej korzyści.
 
 \section{Zakończenie}
-Projekt będący częścią niniejszej pracy umożliwia przetestowanie implementacji wcześniej opisanych teoretycznych rozwiązań. W zależności od rozstawienia jednostek możemy uzyskać dość ciężkie wyzwanie dla gracza, aby pokonać sztuczną inteligencję przeciwnika. Przy jednakowym początkowym rozłożeniu sił, gdy gracz nie wykonuje żadnych akjcji, komputer wygrywa dzięki swoim decyzjom. Podsumowując, praca daje przykładowe rozwiązania dla problemów, które można powszechnie napotkać przy projektowaniu przeciwników komputerowych w grze RTS.
+Projekt będący częścią niniejszej pracy umożliwia przetestowanie implementacji wcześniej opisanych teoretycznych rozwiązań. W zależności od rozstawienia jednostek możemy uzyskać dość trudne wyzwanie dla gracza, aby pokonać sztuczną inteligencję przeciwnika. Przy jednakowym początkowym rozłożeniu sił, gdy gracz nie wykonuje żadnych akcji, komputer wygrywa dzięki swoim decyzjom. Podsumowując - praca daje przykładowe rozwiązania dla problemów, które można powszechnie napotkać przy projektowaniu przeciwników komputerowych w grze RTS.
 
 Poruszane w pracy problemy dają duży potencjał do tworzenia ścieżek rozwoju dla współczesnej sztucznej inteligencji w grach czasu rzeczywistego. Jest to niesamowicie wartościowy temat dla firm i społeczności związanych z tworzeniem gier, który może przenieść swoje zastosowania w inne branże informatyczne i przemysłowe.
 
@@ -826,9 +825,13 @@ Poruszane w pracy problemy dają duży potencjał do tworzenia ścieżek rozwoju
 
 \bibitem{buro} Michael Buro and Timothy Furtak, \emph{RTS Games as Test–Bed for Real–Time AI Research}, Edmonton 2003.
 
-\bibitem{niel} Michael Nielsen, \emph{Neural Networks and Deep Learning}, 2017, \href{http://neuralnetworksanddeeplearning.com}{http://neuralnetworksanddeeplearning.com}.
+\bibitem{marcponsen} David Churchill and Michael Buro, \emph{SORTS: A Human-Level Approach to Real-Time Strategy AI}, Edmonton 2012.
+
+\bibitem{buro} Michael Buro, \emph{Call for AI Research in RTS Games}, 2004, \href{http://neuralnetworksanddeeplearning.com}{http://neuralnetworksanddeeplearning.com}.
 
 \bibitem{marcponsen} Marc Ponsen, \emph{Improving adaptive game ai with evolutionary learning}, Delft 2004.
+
+\bibitem{marcponsen} David Churchill and Michael Buro, \emph{Incorporating Search Algorithms into RTS Game Agents}, Edmonton 2012.
 
 
 
